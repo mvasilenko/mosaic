@@ -1,6 +1,7 @@
 //! Mosaic binary composition root.
 
 mod config;
+mod metrics;
 mod rpc;
 
 use std::{
@@ -258,6 +259,20 @@ where
     let deployment_version = net_service_config.deployment_version.clone();
     let reduced_circuits = net_service_config.reduced_circuits;
     drop(net_service_config);
+
+    if let Some(metrics_cfg) = config.metrics.as_ref() {
+        metrics::start(
+            &metrics_cfg.bind_addr,
+            metrics::BuildInfo {
+                peer_id_hex: hex::encode(our_peer_id),
+                protocol_version,
+                deployment_version: deployment_version.clone(),
+                reduced_circuits,
+            },
+        )
+        .context("failed to start metrics endpoint")?;
+    }
+
     let other_peer_ids = config.known_peers()?;
     let rng = rand_chacha::ChaCha20Rng::from_entropy();
 

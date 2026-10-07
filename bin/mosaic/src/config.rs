@@ -27,6 +27,10 @@ pub(crate) struct MosaicConfig {
     pub(crate) job_scheduler: JobSchedulerSection,
     pub(crate) sm_executor: SmExecutorSection,
     pub(crate) rpc: RpcConfig,
+    /// Optional: absent means no metrics endpoint, which is the pre-existing
+    /// behaviour.
+    #[serde(default)]
+    pub(crate) metrics: Option<MetricsConfig>,
 }
 
 impl MosaicConfig {
@@ -526,6 +530,21 @@ pub(crate) struct SmExecutorSection {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct RpcConfig {
+    pub(crate) bind_addr: String,
+}
+
+/// Prometheus scrape endpoint.
+///
+/// Absent by default so existing deployments keep working unchanged. Until
+/// this is set, mosaic emits no metrics at all — the progress logs on the
+/// `mosaic_progress` target are the only signal, and they are not scrapable.
+///
+/// Like the RPC port this carries operational detail and should be reachable
+/// only from the operator's own monitoring, not from peers.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct MetricsConfig {
+    /// Address to serve `GET /metrics` on, e.g. `127.0.0.1:9100`.
     pub(crate) bind_addr: String,
 }
 
